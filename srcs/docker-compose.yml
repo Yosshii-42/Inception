@@ -1,0 +1,72 @@
+services:
+  mariadb:
+    build: ./requirements/mariadb
+    container_name: mariadb
+    image: yotsurud/mariadb:1.0
+    env_file: .env
+    environment:
+        MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+        MYSQL_PASSWORD_FILE: /run/secrets/mysql_app_password
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./secrets/mysql_root_password:/run/secrets/mysql_root_password:ro
+      - ./secrets/mysql_app_password:/run/secrets/mysql_app_password:ro
+    networks: [inception]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin --protocol=socket -uroot -p\"$(tr -d '\\n' </run/secrets/mysql_root_password)\" ping --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+  wordpress:
+    build: ./requirements/wordpress
+    container_name: wordpress
+    image: yotsurud/wordpress:1.0
+    env_file: .env
+    environment:
+      WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_user1_password
+      WP_USER2_PASSWORD_FILE: /run/secrets/wp_user2_password
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/mysql_app_password
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    volumes:
+      - wp_data:/var/www/html
+      - ./secrets/wp_user1_password:/run/secrets/wp_user1_password:ro
+      - ./secrets/wp_user2_password:/run/secrets/wp_user2_password:ro
+      - ./secrets/mysql_app_password:/run/secrets/mysql_app_password:ro
+    networks: [inception]
+    restart: unless-stopped
+
+  nginx:
+    build: ./requirements/nginx
+    container_name: nginx
+    image: yotsurud/nginx:1.0
+    depends_on: [wordpress]
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - wp_data:/var/www/html:ro
+    networks: [inception]
+    restart: unless-stopped
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/yotsurud/data/mariadb
+  wp_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/yotsurud/data/wordpress
+
+networks:
+  inception:
+    driver: bridge

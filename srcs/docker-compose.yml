@@ -5,12 +5,12 @@ services:
     image: yotsurud/mariadb:1.0
     env_file: .env
     environment:
-        MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
-        MYSQL_PASSWORD_FILE: /run/secrets/mysql_app_password
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wpuser 
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MARIADB_PASSWORD_FILE: /run/secrets/mysql_app_password
     volumes:
       - db_data:/var/lib/mysql
-      - ./secrets/mysql_root_password:/run/secrets/mysql_root_password:ro
-      - ./secrets/mysql_app_password:/run/secrets/mysql_app_password:ro
     networks: [inception]
     restart: unless-stopped
     healthcheck:
@@ -19,6 +19,9 @@ services:
       timeout: 3s
       retries: 30
       start_period: 5s
+    secrets:
+      - mysql_root_password
+      - mysql_app_password
 
   wordpress:
     build: ./requirements/wordpress
@@ -26,19 +29,33 @@ services:
     image: yotsurud/wordpress:1.0
     env_file: .env
     environment:
+      WORDPRESS_DB_HOST: mariadb:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/mysql_app_password
       WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_user1_password
       WP_USER2_PASSWORD_FILE: /run/secrets/wp_user2_password
-      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/mysql_app_password
     depends_on:
       mariadb:
         condition: service_healthy
     volumes:
       - wp_data:/var/www/html
-      - ./secrets/wp_user1_password:/run/secrets/wp_user1_password:ro
-      - ./secrets/wp_user2_password:/run/secrets/wp_user2_password:ro
-      - ./secrets/mysql_app_password:/run/secrets/mysql_app_password:ro
     networks: [inception]
     restart: unless-stopped
+    expose:
+      - "9000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - php -r 'exit(!@fsockopen(\"127.0.0.1\",9000));'
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    secrets:
+      - wp_user1_password
+      - wp_user2_password
+      - mysql_app_password
 
   nginx:
     build: ./requirements/nginx
@@ -47,26 +64,25 @@ services:
     depends_on: [wordpress]
     ports:
       - "443:443"
-      - "80:80"
     volumes:
       - wp_data:/var/www/html:ro
     networks: [inception]
     restart: unless-stopped
 
 volumes:
-  db_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/yotsurud/data/mariadb
-  wp_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/yotsurud/data/wordpress
+  db_data: {}
+  wp_data: {}
 
 networks:
   inception:
     driver: bridge
+
+secrets:
+  mysql_root_password:
+    file: ../secrets/mysql_root_password.txt
+  mysql_app_password:
+    file: ../secrets/mysql_app_password.txt
+  wp_user1_password:
+    file: ../secrets/wp_user1_password.txt
+  wp_user2_password:
+    file: ../secrets/wp_user2_password.txt

@@ -1,7 +1,7 @@
 FROM debian:bullseye
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	mariadb-server mariadb-client ca-certificates \
+	mariadb-server mariadb-client ca-certificates gettext-base \
 	&& rm -rf /var/lib/apt/lists/*
 
 # 必要なディレクトリ作成＆権限

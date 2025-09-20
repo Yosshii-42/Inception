@@ -33,6 +33,9 @@ services:
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_DB_USER: wpuser
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/mysql_app_password
+      PUBLIC_SCHEME: https
+      PUBLIC_HOST: yotsurud.42.fr
+      PUBLIC_PORT: ""
       WP_ADMIN_PASSWORD_FILE: /run/secrets/wp_user1_password
       WP_USER2_PASSWORD_FILE: /run/secrets/wp_user2_password
     depends_on:
@@ -85,4 +88,3 @@ secrets:
     file: ../secrets/wp_user1_password.txt
   wp_user2_password:
     file: ../secrets/wp_user2_password.txt
-

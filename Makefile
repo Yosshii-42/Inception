@@ -3,8 +3,18 @@ NAME 	= srcs
 
 all: up
 
-up:
+hosts:
+	@sh tools/hosts.sh
+
+up: hosts
 	$(COMPOSE) up -d --build
+	$(COMPOSE) ps
+
+unhosts:
+	@sudo sed -E -i.bak \
+		-e '/^[[:space:]]*#/b' \
+		-e '/(^|[[:space:]])yotsurud\.42\.fr([[:space:]]|$$)/d' \
+		/etc/hosts && echo "[hosts] removed"
 
 down:
 	$(COMPOSE) down
@@ -20,8 +30,8 @@ clean:
 
 fclean:
 	$(COMPOSE) down -v --remove-orphans
-	-docker image rm yotsuru/mariadb:1.0 yotsurud/wordpress:1.0 yotsurud/nginx:1.0 || true
+	-docker image rm yotsurud/mariadb:1.0 yotsurud/wordpress:1.0 yotsurud/nginx:1.0 || true
 
 re: fclean up
 
-.PHONY: all up down build logs ps clean fclean re
+.PHONY: all hosts up unhosts down build logs ps clean fclean re

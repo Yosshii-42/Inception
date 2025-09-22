@@ -3,6 +3,7 @@ services:
     build: ./requirements/mariadb
     container_name: mariadb
     image: yotsurud/mariadb:1.0
+    pull_policy: never
     env_file: .env
     environment:
       MARIADB_DATABASE: wordpress
@@ -27,6 +28,7 @@ services:
     build: ./requirements/wordpress
     container_name: wordpress
     image: yotsurud/wordpress:1.0
+    pull_policy: never
     env_file: .env
     environment:
       WORDPRESS_DB_HOST: mariadb:3306
@@ -62,6 +64,7 @@ services:
     build: ./requirements/nginx
     container_name: nginx
     image: yotsurud/nginx:1.0
+    pull_policy: never
     depends_on: [wordpress]
     ports:
       - "443:443"
@@ -71,8 +74,10 @@ services:
     restart: unless-stopped
 
 volumes:
-  db_data: {}
-  wp_data: {}
+  db_data: 
+    name: srcs_db_data
+  wp_data: 
+    name: srcs_wp_data
 
 networks:
   inception:

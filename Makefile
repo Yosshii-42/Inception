@@ -1,4 +1,4 @@
-COMPOSE = docker compose -f srcs/docker-compose.yml
+COMPOSE = docker compose -p srcs -f srcs/docker-compose.yml
 NAME 	= srcs
 
 all: up

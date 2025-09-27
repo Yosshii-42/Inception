@@ -29,9 +29,9 @@ else
 fi
 
 # wpコア
-mkdir -p /var/www/html
-chown -R www-data:www-data /var/www/html
-cd /var/www/html
+mkdir -p /home/yotsurud/data
+chown -R www-data:www-data /home/yotsurud/data
+cd /home/yotsurud/data
 
 # コアがなければ取得
 if [ ! -f wp-settings.php ]; then
@@ -106,18 +106,28 @@ if [ -n "${WP_USER2_LOGIN:-}" ] && ! wp user get "${WP_USER2_LOGIN}" --field=ID 
 fi
 
 # 最終権限整備
-chown -R www-data:www-data /var/www/html
+chown -R www-data:www-data /home/yotsurud/data
 
 # PHP-FPM
 mkdir -p /run/php
 chown root:root /run/php
 chmod 755 /run/php
 
-# CMDにバトンタッチ (php-fpm -F)
-if [ -x /usr/sbin/php-fpm7.4 ]; then
-	exec /usr/sbin/php-fpm7.4 -F
-elif command -v php-fpm >/dev/null 2>&1; then
-	exec php-fpm -F
-else
-	echo "[FATAL] php-fpm not found" >&2; exit 1
+# CMDにバトンタッチ (php-fpm の自動検出)
+PHP_FPM_BIN="$(command -v php-fpm 2>/dev/null || true)"
+[ -x "${PHP_FPM_BIN:-}" ] || PHP_FPM_BIN="$(command -v php-fpm8.2 2>/dev/null || true)"
+[ -x "${PHP_FPM_BIN:-}" ] || PHP_FPM_BIN="$(command -v php8.2-fpm 2>/dev/null || true)"
+
+if [ -z "${PHP_FPM_BIN:-}" ]; then
+  echo "[FATAL] php-fpm not found" >&2
+  exit 1
 fi
+
+exec "$PHP_FPM_BIN" -F
+#if [ -x /usr/sbin/php-fpm7.4 ]; then
+#	exec /usr/sbin/php-fpm7.4 -F
+#elif command -v php-fpm >/dev/null 2>&1; then
+#	exec php-fpm -F
+#else
+#	echo "[FATAL] php-fpm not found" >&2; exit 1
+#fi

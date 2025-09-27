@@ -1,4 +1,4 @@
-FROM debian:bullseye
+FROM debian:12
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	php-fpm php-mysql php-cli php-curl php-zip php-xml php-mbstring curl ca-certificates \
@@ -9,21 +9,22 @@ RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-
 		-o /usr/local/bin/wp \
 	&& chmod +x /usr/local/bin/wp
 
-# PHP-FPMを9000でlisten / 環境変数を渡せるように
+# PHP-FPMを0.0.0.0:9000でlisten / 環境変数を渡せるように
 RUN for f in /etc/php/*/fpm/pool.d/www.conf; do \
-	[ -f "$f" ] && sed -ri 's|^;?listen *=.*$|listen = 9000|' "$f" \
+	[ -f "$f" ] && sed -ri 's|^;?listen *=.*$|listen = 0.0.0.0:9000|' "$f" \
 		    && sed -ri 's|^;?clear_env *=.*$|clear_env = no|' "$f"; \
 	done
+EXPOSE 9000
 
-WORKDIR /var/www/html
-RUN mkdir -p /var/www/html && chown -R www-data:www-data /var/www/html
+WORKDIR /home/yotsurud/data
+RUN mkdir -p /home/yotsurud/data && chown -R www-data:www-data /home/yotsurud/data
 
 # 起動スクリプト
 COPY tools/init.sh /usr/local/bin/init.sh
 RUN chmod +x /usr/local/bin/init.sh
 
 EXPOSE 9000
-VOLUME ["/var/www/html"]
+VOLUME ["/home/yotsurud/data"]
 
 # init.shが最終的にphp-fpmをexecする前提
 ENTRYPOINT ["/usr/local/bin/init.sh"]

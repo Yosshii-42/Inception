@@ -25,7 +25,7 @@ done
 # datadir が無ければ初期化だけ実施（サーバ起動は最後にまとめて行う）
 install -o mysql -g mysql -m 0755 -d "${DATADIR}"
 if [[ ! -d "${DATADIR}/mysql" ]]; then
-  echo "[init] Initializing datadir..." >&2
+  echo "[init] Initializing datadir at ${DATADIR}..." >&2
   mariadb-install-db --user=mysql --datadir="${DATADIR}" \
     --auth-root-authentication-method=normal >/dev/null
 fi

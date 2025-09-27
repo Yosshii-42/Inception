@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-DATADIR="/var/lib/mysql"
+DATADIR="/home/yotsurud/data"
 
 # ソケット用ディレクトリ
 install -o mysql -g mysql -m 0755 -d /run/mysqld
@@ -25,7 +25,7 @@ done
 # datadir が無ければ初期化だけ実施（サーバ起動は最後にまとめて行う）
 install -o mysql -g mysql -m 0755 -d "${DATADIR}"
 if [[ ! -d "${DATADIR}/mysql" ]]; then
-  echo "[init] Initializing datadir at ${DATADIR}..." >&2
+  echo "[init] Initializing datadir..." >&2
   mariadb-install-db --user=mysql --datadir="${DATADIR}" \
     --auth-root-authentication-method=normal >/dev/null
 fi
@@ -51,5 +51,9 @@ SQL
 envsubst < /tmp/bootstrap.sql > /tmp/bootstrap.expanded.sql
 
 # 既存データの有無に関わらず 毎回 init-file を実行させて起動
-exec mysqld --user=mysql --datadir="${DATADIR}" --bind-address=0.0.0.0 \
+exec mysqld --user=mysql \
+	--datadir="${DATADIR}" \
+  --bind-address=0.0.0.0 \
+	--socket=/run/mysqld/mysqld.sock \
+	--pid-file=/run/mysqld/mysqld.pid \
   --init-file=/tmp/bootstrap.expanded.sql

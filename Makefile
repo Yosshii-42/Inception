@@ -6,14 +6,6 @@ all: up
 hosts:
 	@sh tools/hosts.sh
 
-prepare:
-	sudo mkdir -p /home/yotsurud/data/mariadb /home/yotsurud/data/wordpress
-	sudo chown -R 999:999 	/home/yotsurud/data/mariadb
-	sudo chmod -R 700	/home/yotsurud/data/mariadb
-	sudo chown -R 33:33	/home/yotsurud/data/wordpress
-	sudo find /home/yotsurud/data/wordpress -type d -exec chmod 755 {} +
-	sudo find /home/yotsurud/data/wordpress -type f -exec chmod 644 {} +
-
 up: hosts
 	$(COMPOSE) up -d --build
 	$(COMPOSE) ps

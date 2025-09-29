@@ -11,7 +11,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-
 
 # PHP-FPMを9000でlisten / 環境変数を渡せるように
 RUN for f in /etc/php/*/fpm/pool.d/www.conf; do \
-	[ -f "$f" ] && sed -ri 's|^;?listen *=.*$|listen = 9000|' "$f" \
+	[ -f "$f" ] && sed -ri 's|^;?listen *=.*$|listen = 0.0.0.0:9000|' "$f" \
 		    && sed -ri 's|^;?clear_env *=.*$|clear_env = no|' "$f"; \
 	done
 

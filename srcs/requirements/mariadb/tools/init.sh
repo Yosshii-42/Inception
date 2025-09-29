@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-DATADIR="/home/yotsurud/data"
+DATADIR="/var/lib/mysql"
 
 # ソケット用ディレクトリ
 install -o mysql -g mysql -m 0755 -d /run/mysqld
@@ -51,9 +51,5 @@ SQL
 envsubst < /tmp/bootstrap.sql > /tmp/bootstrap.expanded.sql
 
 # 既存データの有無に関わらず 毎回 init-file を実行させて起動
-exec mysqld --user=mysql \
-	--datadir="${DATADIR}" \
-  --bind-address=0.0.0.0 \
-	--socket=/run/mysqld/mysqld.sock \
-	--pid-file=/run/mysqld/mysqld.pid \
+exec mysqld --user=mysql --datadir="${DATADIR}" --bind-address=0.0.0.0 \
   --init-file=/tmp/bootstrap.expanded.sql

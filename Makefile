@@ -1,6 +1,11 @@
 COMPOSE = docker compose -p srcs -f srcs/docker-compose.yml
 NAME 	= srcs
 
+DATA_DIR := /home/yotsurud/data
+DB_DIR	 := $(DATA_DIR)/db
+WP_DIR	 := $(DATA_DIR)/wp
+SUDO	 ?= sudo
+
 all: up
 
 hosts:
@@ -31,6 +36,7 @@ clean:
 fclean:
 	$(COMPOSE) down -v --remove-orphans
 	-docker image rm yotsurud/mariadb:1.0 yotsurud/wordpress:1.0 yotsurud/nginx:1.0 || true
+	- sudo rm -rf $(DB_DIR)/* $(WP_DIR)/* || true
 
 re: fclean up
 

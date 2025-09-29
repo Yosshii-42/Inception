@@ -114,10 +114,13 @@ chown root:root /run/php
 chmod 755 /run/php
 
 # CMDにバトンタッチ (php-fpm -F)
-if [ -x /usr/sbin/php-fpm7.4 ]; then
-	exec /usr/sbin/php-fpm7.4 -F
-elif command -v php-fpm >/dev/null 2>&1; then
-	exec php-fpm -F
-else
+PHPFPM="$(command -v php-fpm 2>/dev/null || command -v php-fpm8* 2>/dev/null || true)"
+if [ -z "$PHPFPM" ]; then
+	for f in /usr/sbin/php-fpm* /usr/local/sbin/php-fpm*; do
+		[ -x "$f" ] && PHPFPM="$f" && break
+	done
+fi
+if [ -z "$PHPFPM" ]; then
 	echo "[FATAL] php-fpm not found" >&2; exit 1
 fi
+exec "$PHPFPM" -F

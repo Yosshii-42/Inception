@@ -1,3 +1,4 @@
+
 services:
   mariadb:
     build: ./requirements/mariadb
@@ -11,7 +12,7 @@ services:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MARIADB_PASSWORD_FILE: /run/secrets/mysql_app_password
     volumes:
-      - /home/yotsurud/data/db:/var/lib/mysql
+      - db_data:/var/lib/mysql
     networks: [inception]
     restart: unless-stopped
     healthcheck:
@@ -44,7 +45,7 @@ services:
       mariadb:
         condition: service_healthy
     volumes:
-      - /home/yotsurud/data/wp:/var/www/html
+      - wp_data:/var/www/html
     networks: [inception]
     restart: unless-stopped
     expose:
@@ -69,15 +70,23 @@ services:
     ports:
       - "443:443"
     volumes:
-      - /home/yotsurud/data/wp:/var/www/html:ro
+      - wp_data:/var/www/html:ro
     networks: [inception]
     restart: unless-stopped
 
-      #volumes:
-      #db_data: 
-      #name: srcs_db_data
-      #wp_data: 
-      #name: srcs_wp_data
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/yotsurud/data/db
+  wp_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/yotsurud/data/wp
 
 networks:
   inception:

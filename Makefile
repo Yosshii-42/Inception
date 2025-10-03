@@ -1,5 +1,4 @@
 COMPOSE = docker compose -p srcs -f srcs/docker-compose.yml
-NAME 	= srcs
 
 DATA_DIR := /home/yotsurud/data
 DB_DIR	 := $(DATA_DIR)/db
@@ -13,7 +12,6 @@ hosts:
 
 up: hosts
 	$(COMPOSE) up -d --build
-	$(COMPOSE) ps
 
 unhosts:
 	@sudo sed -E -i.bak \

@@ -33,7 +33,7 @@ mkdir -p /var/www/html
 chown -R www-data:www-data /var/www/html
 cd /var/www/html
 
-# コアがなければ取得
+# コアがなければ公式のWordPress.org配布サーバから取得
 if [ ! -f wp-settings.php ]; then
 	i=0
 	until wp core download --allow-root >/dev/null 2>&1; do
@@ -43,7 +43,7 @@ if [ ! -f wp-settings.php ]; then
 	done
 fi
 
-# DBが応答するまで待つ
+# DBが応答するまで待つ(mysqli_connecを最大60回/2秒間隔)
 echo "[wp] waiting for database..."
 ok=0
 for i in $(seq 1 60); do
@@ -80,7 +80,7 @@ else
 	fi
 fi
 
-# 初回インストール時に --urlを指定
+# 初回インストール or URL更新
 if ! wp core is-installed --allow-root >/dev/null 2>&1; then
 	wp core install \
 		--url="$PUBLIC_URL" \
@@ -113,14 +113,19 @@ mkdir -p /run/php
 chown root:root /run/php
 chmod 755 /run/php
 
-# CMDにバトンタッチ (php-fpm -F)
+# CMDにバトンタッチ (php-fpm -F)　php-fpm起動
+# PATH上にあるphp-fpmを探す
 PHPFPM="$(command -v php-fpm 2>/dev/null || command -v php-fpm8* 2>/dev/null || true)"
+# 見つからない場合は、よくある配置場所を直に総当り
 if [ -z "$PHPFPM" ]; then
 	for f in /usr/sbin/php-fpm* /usr/local/sbin/php-fpm*; do
 		[ -x "$f" ] && PHPFPM="$f" && break
 	done
 fi
+# 見つからなければ致命エラーで終了（コンテナは立ち上げない）
 if [ -z "$PHPFPM" ]; then
 	echo "[FATAL] php-fpm not found" >&2; exit 1
 fi
+# 見つかったphp-fpmをフォアグラウンド(-F)で起動し、execでシェルを置き換えてPID1にする
 exec "$PHPFPM" -F
+

@@ -11,9 +11,8 @@ RUN chmod +x /usr/local/bin/init.sh
 
 EXPOSE 443
 ENTRYPOINT ["/usr/local/bin/init.sh"]
-# CMD ["nginx", "-g", "daemon off;"]
 
-
+# nginxのログをDockerのdocker logsに流すためのセットアップ
 RUN mkdir -p /var/log/nginx \
 	&& rm  -f /var/log/nginx/access.log /var/log/nginx/error.log \
 	&& ln -sf /dev/stdout /var/log/nginx/access.log \

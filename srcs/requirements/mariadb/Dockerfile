@@ -20,3 +20,7 @@ EXPOSE 3306
 VOLUME ["/var/lib/mysql"]
 ENTRYPOINT ["/usr/local/bin/init.sh"]
 CMD ["mysqld","--user=mysql","--datadir=/var/lib/mysql","--bind-address=0.0.0.0"]
+
+# ENTRYPOINT コンテナが起動したときに最初に実行される“メインのプログラム”
+#            コンテナ内で PID 1 になる
+# CMD        デフォルト引数やコマンド

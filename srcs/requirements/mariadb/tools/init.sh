@@ -1,4 +1,5 @@
 #!/bin/bash
+# 未定義や失敗で即落ちる
 set -euo pipefail
 
 DATADIR="/var/lib/mysql"
@@ -16,13 +17,13 @@ for v in MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD MARIADB_ROOT_PASSWORD; d
   fi
 done
 
-# 必須チェック
+# 必須チェック 無ければ即エラー
 : "${MARIADB_DATABASE:?required}"
 : "${MARIADB_USER:?required}"
 : "${MARIADB_PASSWORD:?required}"
 : "${MARIADB_ROOT_PASSWORD:?required}"
 
-# datadir が無ければ初期化だけ実施（サーバ起動は最後にまとめて行う）
+# datadir 初期化（初回だけ）（サーバ起動は最後にまとめて行う）
 install -o mysql -g mysql -m 0755 -d "${DATADIR}"
 if [[ ! -d "${DATADIR}/mysql" ]]; then
   echo "[init] Initializing datadir..." >&2
@@ -32,24 +33,30 @@ fi
 
 # 毎回流す ブートストラップ SQL を生成
 cat > /tmp/bootstrap.sql <<'SQL'
--- root パスワード（同じ値に毎回揃える。冪等）
+-- root パスワード設定
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}';
 
--- アプリ用 DB（無ければ作る）
+-- DB 作成（無ければ）
 CREATE DATABASE IF NOT EXISTS `${MARIADB_DATABASE}`
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- アプリ用ユーザ（ホストは % に統一）
+-- ユーザ作成/更新 冪等
 CREATE USER IF NOT EXISTS '${MARIADB_USER}'@'%' IDENTIFIED BY '${MARIADB_PASSWORD}';
 ALTER  USER               '${MARIADB_USER}'@'%' IDENTIFIED BY '${MARIADB_PASSWORD}';
 GRANT ALL PRIVILEGES ON `${MARIADB_DATABASE}`.* TO '${MARIADB_USER}'@'%';
 
+-- 権限付与
 FLUSH PRIVILEGES;
 SQL
 
 # 変数展開したファイルを --init-file に渡す
 envsubst < /tmp/bootstrap.sql > /tmp/bootstrap.expanded.sql
 
-# 既存データの有無に関わらず 毎回 init-file を実行させて起動
+# 既存データの有無に関わらず 毎回 init-file を実行させて起動 PID1置き換え
 exec mysqld --user=mysql --datadir="${DATADIR}" --bind-address=0.0.0.0 \
   --init-file=/tmp/bootstrap.expanded.sql
+
+# MariaDB コンテナのエントリポイント
+# 秘密情報を安全に読み込み
+#  → データディレクトリを初期化（必要なら）
+#  → 毎回の起動時にDB/ユーザ/権限を確実に整える、までを自動でやる

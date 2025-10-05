@@ -102,3 +102,21 @@ secrets:
     file: ../secrets/wp_user1_password.txt
   wp_user2_password:
     file: ../secrets/wp_user2_password.txt
+
+# 3つとも同じ bridge ネットワーク srcs_inception 上
+# wordpress ↔ mariadb は WORDPRESS_DB_HOST: mariadb:3306 で接続
+# nginx → wordpress はコンテナ内ポート 9000（php-fpm）へ
+#  expose: "9000" で内部開放、外へは出さない
+# named volume + bind 方式で実体を /home/yotsurud/data/ 配下に固定
+#  db_data → /home/yotsurud/data/db を MariaDB の /var/lib/mysql に
+#  wp_data → /home/yotsurud/data/wp を WordPress の /var/www/html に
+#  nginx も wp_data を read-only で参照
+# これで コンテナ停止中でも ホストから中身を見たり編集できる
+# depends_on + healthcheck
+#  mariadb が mysqladmin … ping で healthy になってから wordpress 起動
+#  wordpress は wp core is-installed でヘルス確認
+# 全サービス restart: unless-stopped（手で止めない限り再起動）
+# 環境変数のうちパスワードは *_FILE で Docker secrets のファイルを読む設計
+#  secrets: セクションで ../secrets/*.txt を割り当て
+# 各サービス build: ./requirements/... からイメージ作成し、同名タグ（例 yotsurud/wordpress:1.0）を付与
+# 外部公開は nginx の 443 だけ（ports: "443:443"）。HTTPは開けていない

@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	php-fpm php-mysql php-cli php-curl php-zip php-xml php-mbstring curl ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
 
-# wp-cliを配置
+# WP_CLIを配置
 RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
 		-o /usr/local/bin/wp \
 	&& chmod +x /usr/local/bin/wp
@@ -30,3 +30,9 @@ ENTRYPOINT ["/usr/local/bin/init.sh"]
 CMD ["php-fpm", "-F"]
 
 ENV WP_CLI_ALLOW_ROOT=1
+
+# WP_CLI WordPressをコマンドラインで操作するツール
+#        ブラウザを開かずに、スクリプトから確実・自動で実行できるの
+# PHP-FPM FastCGI Process Manager
+#         PHPを実行してレスポンスを返す常駐プロセス
+#         NginxはPHPを直接実行できないので、FastCGIでPHP-FPMに渡す

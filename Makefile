@@ -11,10 +11,13 @@ hosts:
 	@$(SUDO) sh tools/hosts.sh
 
 preflight: hosts
-	@set -e; \
+	# コマンドを同じシェルで実行し1つでも失敗したら即終了
+	@set -e; \ 
 	$(SUDO) mkdir -p "$(DB_DIR)" "$(WP_DIR)"; \
 	$(SUDO) chmod 755 "$(DATA_DIR)" "$(DB_DIR)" "$(WP_DIR)"; \
+	# 以後で参照する設定ファイルのシェル変数を定義
 	CONF=/etc/docker/daemon.json; \
+	# daemon.json が無い or "dns" キーが未設定ならファイルを新規作成 or 上書き
 	if ! grep -q '"dns"' "$$CONF" 2>/dev/null; then \
 		echo '{ "dns": ["1.1.1.1", "8.8.8.8"] }' | $(SUDO) tee "$$CONF" >/dev/null; \
 		$(SUDO) systemctl restart docker; \
